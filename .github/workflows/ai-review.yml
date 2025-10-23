@@ -1,0 +1,41 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore and build
+        run: |
+          cd Backend
+          dotnet restore
+          dotnet build --no-restore
+
+      - name: Run AI Code Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd Backend
+          dotnet run --project Backend.csproj > ai_review_output.txt
+
+      - name: Upload AI Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-review-report
+          path: Backend/ai_review_output.txt
